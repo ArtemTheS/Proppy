@@ -528,6 +528,48 @@
     font-size: 12px;
   }
 
+  .angebot-list.nicht-enthalten li::before {
+    content: '✗';
+    color: #c0392b;
+  }
+
+  .angebot-list.nicht-enthalten li {
+    color: var(--muted);
+  }
+
+  /* Preiskasten */
+  .angebot-preis-box {
+    background: var(--ink);
+    color: white;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin: 16px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .angebot-preis-box .preis-label {
+    font-size: 13px;
+    opacity: 0.7;
+    margin-bottom: 4px;
+  }
+
+  .angebot-preis-box .preis-betrag {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -1px;
+  }
+
+  .angebot-preis-box .preis-details {
+    font-size: 12px;
+    opacity: 0.6;
+    text-align: right;
+    line-height: 1.6;
+  }
+
   .angebot-table {
     width: 100%;
     border-collapse: collapse;
@@ -926,8 +968,9 @@ Verwende ausschließlich diese HTML-Elemente:
 - <hr class="angebot-divider"> für Trennlinien zwischen Abschnitten
 - <h2 class="angebot-section-title"> für Abschnittsüberschriften (z.B. "Leistungsumfang", "Preisübersicht")
 - <p class="angebot-text"> für normale Absätze
-- <ul class="angebot-list"> mit <li> für Aufzählungen
-- <table class="angebot-table"> mit <tr><td> für die Preisübersicht
+- <ul class="angebot-list"> mit <li> für Leistungen (mit Häkchen ✓)
+- <ul class="angebot-list nicht-enthalten"> mit <li> für NICHT enthaltene Leistungen (mit Kreuz ✗)
+- <div class="angebot-preis-box"> für die Preishervorhebung — darin: <div class="preis-label">Gesamtbetrag (netto)</div> und <div class="preis-betrag">X.XXX €</div> links, sowie <div class="preis-details">Netto: X €<br>MwSt. 19%: X €<br>Brutto: X €</div> rechts
 - <div class="angebot-highlight"> für den CTA / nächste Schritte
 - <div class="angebot-footer"> für Schlussformel, Freizeichnungsklausel und Grußformel
 
@@ -936,10 +979,10 @@ Abschnitte in dieser Reihenfolge:
 2. Betreff (als h2, fett und prominent)
 3. Anrede: "${data.anrede} ${data.ansprechpartner || ''}"
 4. Einleitung (2-3 Sätze)
-5. Leistungsumfang (Aufzählung)
-6. Nicht enthalten (Aufzählung)
+5. Leistungsumfang (angebot-list mit Häkchen)
+6. Nicht enthalten (angebot-list nicht-enthalten mit Kreuzen)
 7. Zeitplan
-8. Preisübersicht als Tabelle (${ustHinweis})
+8. Preisübersicht als angebot-preis-box (${ustHinweis})
 9. Warum ich? (1 Absatz)
 10. Nächste Schritte (highlight-Box)
 11. Schlussformel + Freizeichnungsklausel + Grußformel
@@ -995,25 +1038,238 @@ function resetForm() {
 function downloadPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-
-  const text = document.getElementById('angebotContent').innerText;
-  const lines = doc.splitTextToSize(text, 170);
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
-  doc.setTextColor(15, 15, 15);
-
+  const pageW = 210;
+  const marginL = 20;
+  const marginR = 20;
+  const contentW = pageW - marginL - marginR;
+  const pageH = 297;
+  const marginBottom = 20;
   let y = 20;
-  const pageHeight = 280;
 
-  lines.forEach(line => {
-    if (y > pageHeight) {
+  function checkPage(needed = 8) {
+    if (y + needed > pageH - marginBottom) {
       doc.addPage();
       y = 20;
     }
-    doc.text(line, 20, y);
-    y += 5.5;
-  });
+  }
+
+  function addText(text, fontSize, color, style, maxWidth, lineHeight) {
+    doc.setFontSize(fontSize);
+    doc.setTextColor(...color);
+    doc.setFont('helvetica', style);
+    const lines = doc.splitTextToSize(text, maxWidth);
+    lines.forEach(line => {
+      checkPage(lineHeight);
+      doc.text(line, marginL, y);
+      y += lineHeight;
+    });
+  }
+
+  function addLine(r, g, b) {
+    checkPage(6);
+    doc.setDrawColor(r, g, b);
+    doc.setLineWidth(0.3);
+    doc.line(marginL, y, pageW - marginR, y);
+    y += 6;
+  }
+
+  // Angebot-DOM parsen
+  const container = document.getElementById('angebotContent');
+
+  function processNode(node) {
+    if (node.nodeType === Node.TEXT_NODE) return;
+
+    const tag = node.tagName ? node.tagName.toLowerCase() : '';
+    const cls = node.className || '';
+    const text = node.innerText ? node.innerText.trim() : '';
+
+    if (!text && tag !== 'hr') return;
+
+    if (tag === 'hr') {
+      addLine(203, 213, 225);
+      return;
+    }
+
+    if (tag === 'h2') {
+      checkPage(12);
+      if (cls.includes('angebot-section-title')) {
+        // Farbige Überschrift mit Unterstrich
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(44, 74, 140);
+        doc.text(text, marginL, y);
+        y += 2;
+        doc.setDrawColor(44, 74, 140);
+        doc.setLineWidth(0.5);
+        doc.line(marginL, y, pageW - marginR, y);
+        y += 7;
+      } else {
+        // Betreff-Überschrift
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(26, 31, 46);
+        const lines = doc.splitTextToSize(text, contentW);
+        lines.forEach(line => { checkPage(8); doc.text(line, marginL, y); y += 8; });
+        y += 2;
+      }
+      return;
+    }
+
+    if (tag === 'div' && cls.includes('angebot-header')) {
+      // Kopfzeile zweispaltig
+      const halfw = contentW / 2 - 5;
+      const leftDiv = node.children[0];
+      const rightDiv = node.children[1];
+
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 116, 139);
+
+      let leftY = y;
+      let rightY = y;
+
+      if (leftDiv) {
+        const lines = doc.splitTextToSize(leftDiv.innerText.trim(), halfw);
+        lines.forEach(line => {
+          const isBold = line === lines[0];
+          doc.setFont('helvetica', isBold ? 'bold' : 'normal');
+          doc.setTextColor(isBold ? 26 : 100, isBold ? 31 : 116, isBold ? 46 : 139);
+          doc.text(line, marginL, leftY);
+          leftY += 5;
+        });
+      }
+      if (rightDiv) {
+        const lines = doc.splitTextToSize(rightDiv.innerText.trim(), halfw);
+        lines.forEach(line => {
+          const isBold = line === lines[0];
+          doc.setFont('helvetica', isBold ? 'bold' : 'normal');
+          doc.setTextColor(isBold ? 26 : 100, isBold ? 31 : 116, isBold ? 46 : 139);
+          doc.text(line, marginL + halfw + 10, rightY);
+          rightY += 5;
+        });
+      }
+
+      y = Math.max(leftY, rightY) + 4;
+      addLine(203, 213, 225);
+
+      // Meta-Zeile (Angebotsnummer/Datum)
+      const metaDiv = node.querySelector('.meta');
+      if (metaDiv) {
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100, 116, 139);
+        doc.text(metaDiv.innerText.trim(), marginL, y);
+        y += 8;
+      }
+      return;
+    }
+
+    if (tag === 'p') {
+      checkPage(6);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(26, 31, 46);
+      const lines = doc.splitTextToSize(text, contentW);
+      lines.forEach(line => { checkPage(6); doc.text(line, marginL, y); y += 6; });
+      y += 3;
+      return;
+    }
+
+    if (tag === 'ul') {
+      const isNicht = cls.includes('nicht-enthalten');
+      const symbol = isNicht ? '✗' : '✓';
+      const symColor = isNicht ? [192, 57, 43] : [44, 74, 140];
+      node.querySelectorAll('li').forEach(li => {
+        checkPage(6);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...symColor);
+        doc.text(symbol, marginL, y);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(isNicht ? 100 : 26, isNicht ? 116 : 31, isNicht ? 139 : 46);
+        const liLines = doc.splitTextToSize(li.innerText.trim(), contentW - 8);
+        liLines.forEach((line, i) => {
+          if (i > 0) { checkPage(5); y += 0; }
+          doc.text(line, marginL + 7, y);
+          if (i < liLines.length - 1) y += 5;
+        });
+        y += 6;
+      });
+      y += 2;
+      return;
+    }
+
+    if (tag === 'div' && cls.includes('angebot-preis-box')) {
+      checkPage(24);
+      // Dunkler Kasten
+      doc.setFillColor(26, 31, 46);
+      doc.roundedRect(marginL, y, contentW, 22, 3, 3, 'F');
+
+      // Label
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(255, 255, 255);
+      doc.setGState && doc.setGState(new doc.GState({ opacity: 0.6 }));
+      const labelEl = node.querySelector('.preis-label');
+      if (labelEl) doc.text(labelEl.innerText.trim(), marginL + 6, y + 7);
+
+      // Betrag
+      doc.setGState && doc.setGState(new doc.GState({ opacity: 1 }));
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(255, 255, 255);
+      const betragEl = node.querySelector('.preis-betrag');
+      if (betragEl) doc.text(betragEl.innerText.trim(), marginL + 6, y + 17);
+
+      // Details rechts
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      const detailsEl = node.querySelector('.preis-details');
+      if (detailsEl) {
+        const detLines = detailsEl.innerText.trim().split('\n');
+        detLines.forEach((dl, i) => {
+          doc.text(dl.trim(), pageW - marginR - 6, y + 7 + (i * 5), { align: 'right' });
+        });
+      }
+
+      y += 28;
+      return;
+    }
+
+    if (tag === 'div' && cls.includes('angebot-highlight')) {
+      checkPage(16);
+      doc.setFillColor(220, 228, 245);
+      doc.roundedRect(marginL, y, contentW, 14, 2, 2, 'F');
+      doc.setDrawColor(44, 74, 140);
+      doc.setLineWidth(0.8);
+      doc.line(marginL, y, marginL, y + 14);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(26, 31, 46);
+      const hlLines = doc.splitTextToSize(text, contentW - 10);
+      hlLines.forEach((line, i) => {
+        doc.text(line, marginL + 6, y + 6 + (i * 5));
+      });
+      y += 18;
+      return;
+    }
+
+    if (tag === 'div' && cls.includes('angebot-footer')) {
+      checkPage(8);
+      addLine(203, 213, 225);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 116, 139);
+      const footLines = doc.splitTextToSize(text, contentW);
+      footLines.forEach(line => { checkPage(5); doc.text(line, marginL, y); y += 5; });
+      return;
+    }
+
+    // Fallback: Kinder durchlaufen
+    node.childNodes.forEach(child => processNode(child));
+  }
+
+  container.childNodes.forEach(node => processNode(node));
 
   const projektname = document.getElementById('projektname').value || 'Angebot';
   doc.save(`Angebot_${projektname.replace(/\s+/g, '_')}.pdf`);
