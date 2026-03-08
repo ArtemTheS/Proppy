@@ -350,13 +350,28 @@
   }
 
   /* RESULT */
-  .result-section {
+  .result-wrapper {
     display: none;
-    grid-column: 1 / -1;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 40px 60px;
     animation: fadeIn 0.5s ease;
   }
 
-  .result-section.active { display: block; }
+  .result-wrapper.active { display: block; }
+
+  .result-bar {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
 
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(16px); }
@@ -699,16 +714,16 @@
 
   /* RESPONSIVE */
   @media (max-width: 640px) {
-    .hero, .api-section, .main { padding-left: 20px; padding-right: 20px; }
+    .hero, .api-section, .main, .result-wrapper { padding-left: 20px; padding-right: 20px; }
     .main { grid-template-columns: 1fr; }
     .card.full { grid-column: 1; }
     .generate-btn { grid-column: 1; }
-    .result-section { grid-column: 1; }
     .error-box { grid-column: 1; }
     .loading { grid-column: 1; }
     .angebot-content { padding: 24px; }
     .row { grid-template-columns: 1fr; }
     header { padding: 16px 20px; }
+    .result-bar { flex-direction: column; align-items: flex-start; }
   }
 </style>
 </head>
@@ -876,29 +891,29 @@
   <!-- ERROR -->
   <div class="error-box" id="errorBox"></div>
 
-  <!-- RESULT -->
-  <div class="result-section" id="resultSection">
-    <div class="result-header">
-      <div class="result-title">
-        <div class="check">✓</div>
-        Dein Angebot ist fertig
-      </div>
-      <div class="action-btns">
-        <button class="btn-secondary" onclick="copyToClipboard()">📋 Kopieren</button>
-        <button class="btn-secondary" onclick="resetForm()">↩ Neu erstellen</button>
-        <button class="btn-primary-sm" onclick="downloadPDF()">⬇ PDF herunterladen</button>
-      </div>
+</div>
+
+<!-- RESULT — außerhalb des Grids, volle Breite -->
+<div class="result-wrapper" id="resultSection">
+  <div class="result-bar">
+    <div class="result-title">
+      <div class="check">✓</div>
+      Ihr Angebot ist fertig
     </div>
-    <div class="angebot-output">
-      <div class="angebot-toolbar">
-        <div class="toolbar-dot" style="background:#ff5f57"></div>
-        <div class="toolbar-dot" style="background:#febc2e"></div>
-        <div class="toolbar-dot" style="background:#28c840"></div>
-      </div>
-      <div class="angebot-content" id="angebotContent"></div>
+    <div class="action-btns">
+      <button class="btn-secondary" onclick="copyToClipboard()">📋 Kopieren</button>
+      <button class="btn-secondary" onclick="resetForm()">↩ Neu erstellen</button>
+      <button class="btn-primary-sm" onclick="downloadPDF()">⬇ PDF herunterladen</button>
     </div>
   </div>
-
+  <div class="angebot-output">
+    <div class="angebot-toolbar">
+      <div class="toolbar-dot" style="background:#ff5f57"></div>
+      <div class="toolbar-dot" style="background:#febc2e"></div>
+      <div class="toolbar-dot" style="background:#28c840"></div>
+    </div>
+    <div class="angebot-content" id="angebotContent"></div>
+  </div>
 </div>
 
 <div class="footer-note">
@@ -1283,10 +1298,15 @@ function downloadPDF() {
     node.childNodes.forEach(child => processNode(child));
   }
 
-  container.childNodes.forEach(node => processNode(node));
-
-  const projektname = document.getElementById('projektname').value || 'Angebot';
-  doc.save(`Angebot_${projektname.replace(/\s+/g, '_')}.pdf`);
+  try {
+    const container = document.getElementById('angebotContent');
+    if (!container) { alert('Fehler: Kein Angebot zum Exportieren gefunden.'); return; }
+    container.childNodes.forEach(node => processNode(node));
+    const projektname = document.getElementById('projektname').value || 'Angebot';
+    doc.save(`Angebot_${projektname.replace(/\s+/g, '_')}.pdf`);
+  } catch(e) {
+    alert('PDF-Fehler: ' + e.message);
+  }
 }
 </script>
 </body>
