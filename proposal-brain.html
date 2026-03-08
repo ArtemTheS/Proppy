@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proposal Brain — KI-Angebote für Freelancer</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root {
+    --ink: #0f0f0f;
+    --paper: #f7f4ef;
+    --cream: #ede9e1;
+    --accent: #c8622a;
+    --accent-light: #f0ddd1;
+    --muted: #7a7267;
+    --border: #d6d0c4;
+    --success: #2a7a4b;
+    --white: #ffffff;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--ink);
+    padding: 20px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    color: var(--paper);
+    letter-spacing: -0.5px;
+  }
+
+  .logo span { color: var(--accent); }
+
+  .badge {
+    background: var(--accent);
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+
+  /* HERO */
+  .hero {
+    padding: 60px 40px 40px;
+    max-width: 860px;
+    margin: 0 auto;
+  }
+
+  .hero-eyebrow {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+
+  .hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(32px, 5vw, 52px);
+    line-height: 1.1;
+    letter-spacing: -1px;
+    margin-bottom: 16px;
+    color: var(--ink);
+  }
+
+  .hero h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .hero p {
+    font-size: 16px;
+    color: var(--muted);
+    line-height: 1.6;
+    max-width: 540px;
+  }
+
+  /* API KEY SECTION */
+  .api-section {
+    max-width: 860px;
+    margin: 0 auto 0;
+    padding: 0 40px;
+  }
+
+  .api-box {
+    background: var(--ink);
+    border-radius: 12px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .api-box label {
+    color: var(--paper);
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .api-box label span {
+    display: block;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .api-box input {
+    flex: 1;
+    min-width: 200px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--paper);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .api-box input:focus { border-color: var(--accent); }
+  .api-box input::placeholder { color: rgba(247,244,239,0.3); }
+
+  .api-link {
+    color: var(--accent);
+    font-size: 12px;
+    text-decoration: none;
+    white-space: nowrap;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s;
+  }
+  .api-link:hover { border-color: var(--accent); }
+
+  /* MAIN FORM */
+  .main {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 32px 40px 80px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+
+  .card {
+    background: var(--white);
+    border-radius: 16px;
+    padding: 28px;
+    border: 1px solid var(--border);
+  }
+
+  .card.full { grid-column: 1 / -1; }
+
+  .card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--cream);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-title .num {
+    width: 24px;
+    height: 24px;
+    background: var(--accent);
+    color: white;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Sans', sans-serif;
+    flex-shrink: 0;
+  }
+
+  .field { margin-bottom: 16px; }
+  .field:last-child { margin-bottom: 0; }
+
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  input[type="text"],
+  input[type="email"],
+  input[type="number"],
+  select,
+  textarea {
+    width: 100%;
+    background: var(--paper);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+    -webkit-appearance: none;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+    background: var(--white);
+  }
+
+  textarea { resize: vertical; line-height: 1.5; }
+
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--paper);
+    border-radius: 8px;
+    padding: 12px 14px;
+    border: 1.5px solid var(--border);
+    margin-bottom: 12px;
+  }
+
+  .toggle-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+    text-transform: none;
+    letter-spacing: 0;
+    margin: 0;
+  }
+
+  .toggle-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  /* Toggle Switch */
+  .switch { position: relative; display: inline-block; width: 40px; height: 22px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute; cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--border);
+    border-radius: 22px;
+    transition: 0.2s;
+  }
+  .slider:before {
+    position: absolute; content: "";
+    height: 16px; width: 16px;
+    left: 3px; bottom: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: 0.2s;
+  }
+  input:checked + .slider { background: var(--accent); }
+  input:checked + .slider:before { transform: translateX(18px); }
+
+  /* GENERATE BUTTON */
+  .generate-btn {
+    grid-column: 1 / -1;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 18px 32px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    letter-spacing: -0.3px;
+  }
+
+  .generate-btn:hover { background: #b8561f; }
+  .generate-btn:active { transform: scale(0.99); }
+  .generate-btn:disabled { background: var(--border); cursor: not-allowed; }
+
+  .btn-icon { font-size: 20px; }
+
+  /* LOADING */
+  .loading {
+    grid-column: 1 / -1;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px;
+    gap: 16px;
+  }
+
+  .loading.active { display: flex; }
+
+  .dots {
+    display: flex;
+    gap: 8px;
+  }
+
+  .dot {
+    width: 10px; height: 10px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: bounce 1.2s infinite;
+  }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); opacity: 0.5; }
+    50% { transform: translateY(-10px); opacity: 1; }
+  }
+
+  .loading p {
+    color: var(--muted);
+    font-size: 14px;
+    font-style: italic;
+  }
+
+  /* RESULT */
+  .result-section {
+    display: none;
+    grid-column: 1 / -1;
+    animation: fadeIn 0.5s ease;
+  }
+
+  .result-section.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    flex-wrap: gap;
+    gap: 12px;
+  }
+
+  .result-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .result-title .check {
+    width: 28px; height: 28px;
+    background: var(--success);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+
+  .action-btns {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .btn-secondary {
+    background: transparent;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 18px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .btn-primary-sm {
+    background: var(--ink);
+    border: 1.5px solid var(--ink);
+    border-radius: 8px;
+    padding: 9px 18px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-primary-sm:hover { background: var(--accent); border-color: var(--accent); }
+
+  /* ANGEBOT OUTPUT */
+  .angebot-output {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .angebot-toolbar {
+    background: var(--cream);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 16px;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .toolbar-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+  }
+
+  .angebot-content {
+    padding: 40px 48px;
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--ink);
+    white-space: pre-wrap;
+    font-family: 'DM Sans', sans-serif;
+    min-height: 300px;
+  }
+
+  /* ERROR */
+  .error-box {
+    display: none;
+    grid-column: 1 / -1;
+    background: #fff0ed;
+    border: 1.5px solid #f0c4b8;
+    border-radius: 12px;
+    padding: 16px 20px;
+    color: #8b2a10;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .error-box.active { display: block; }
+
+  /* FOOTER */
+  .footer-note {
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    padding: 0 40px 40px;
+    max-width: 860px;
+    margin: 0 auto;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 640px) {
+    .hero, .api-section, .main { padding-left: 20px; padding-right: 20px; }
+    .main { grid-template-columns: 1fr; }
+    .card.full { grid-column: 1; }
+    .generate-btn { grid-column: 1; }
+    .result-section { grid-column: 1; }
+    .error-box { grid-column: 1; }
+    .loading { grid-column: 1; }
+    .angebot-content { padding: 24px; }
+    .row { grid-template-columns: 1fr; }
+    header { padding: 16px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Proposal <span>Brain</span></div>
+  <div class="badge">MVP Beta</div>
+</header>
+
+<div class="hero">
+  <div class="hero-eyebrow">KI-Angebotsgenerator für deutsche Freelancer</div>
+  <h1>Professionelle Angebote.<br><em>In 5 Minuten.</em></h1>
+  <p>Fülle das Formular aus — die KI schreibt ein rechtssicheres, überzeugendes Angebot auf Deutsch. Fertig zum Versenden.</p>
+</div>
+
+<div class="api-section">
+  <div class="api-box">
+    <label>
+      API Key
+      <span>Einmalig eintragen, bleibt lokal</span>
+    </label>
+    <input type="password" id="apiKey" placeholder="sk-ant-api03-..." />
+    <a href="https://console.anthropic.com" target="_blank" class="api-link">→ Key holen</a>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- KARTE 1: Deine Daten -->
+  <div class="card">
+    <div class="card-title"><div class="num">1</div> Deine Daten</div>
+
+    <div class="field">
+      <label>Dein Name / Firmenname</label>
+      <input type="text" id="freelancerName" placeholder="z.B. Max Mustermann" />
+    </div>
+    <div class="field">
+      <label>Berufsbezeichnung</label>
+      <input type="text" id="berufsbezeichnung" placeholder="z.B. UX Designer, SEO-Berater" />
+    </div>
+    <div class="field">
+      <label>Deine E-Mail</label>
+      <input type="email" id="freelancerEmail" placeholder="max@beispiel.de" />
+    </div>
+    <div class="field">
+      <label>Steuernummer / USt-ID (optional)</label>
+      <input type="text" id="steuernummer" placeholder="z.B. DE123456789" />
+    </div>
+
+    <div class="toggle-row">
+      <div>
+        <div class="toggle-label">Kleinunternehmer §19 UStG</div>
+        <div class="toggle-sub">Keine Umsatzsteuer ausweisen</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="kleinunternehmer" />
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="field">
+      <label>Stundensatz / Tagessatz</label>
+      <input type="text" id="stundensatz" placeholder="z.B. 90€/Std. oder 700€/Tag" />
+    </div>
+  </div>
+
+  <!-- KARTE 2: Kundendaten -->
+  <div class="card">
+    <div class="card-title"><div class="num">2</div> Kundendaten</div>
+
+    <div class="field">
+      <label>Kundenunternehmen</label>
+      <input type="text" id="kundenname" placeholder="z.B. Musterfirma GmbH" />
+    </div>
+    <div class="field">
+      <label>Ansprechpartner</label>
+      <input type="text" id="ansprechpartner" placeholder="z.B. Frau Schmidt" />
+    </div>
+    <div class="field">
+      <label>Branche des Kunden</label>
+      <select id="branche">
+        <option value="">Bitte wählen...</option>
+        <option>E-Commerce / Online-Handel</option>
+        <option>SaaS / Software</option>
+        <option>Agentur / Beratung</option>
+        <option>Gesundheit / Medizin</option>
+        <option>Finanzen / Versicherung</option>
+        <option>Immobilien</option>
+        <option>Produktion / Industrie</option>
+        <option>Bildung / Coaching</option>
+        <option>Gastronomie / Hotellerie</option>
+        <option>Sonstiges</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Anrede im Angebot</label>
+      <select id="anrede">
+        <option value="Sehr geehrte Frau">Sehr geehrte Frau [Name]</option>
+        <option value="Sehr geehrter Herr">Sehr geehrter Herr [Name]</option>
+        <option value="Sehr geehrte Damen und Herren">Sehr geehrte Damen und Herren</option>
+        <option value="Hallo">Hallo [Name] (informell)</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Gültig bis (Datum)</label>
+      <input type="text" id="gueltigBis" placeholder="z.B. 31.03.2025" />
+    </div>
+  </div>
+
+  <!-- KARTE 3: Projektdetails -->
+  <div class="card full">
+    <div class="card-title"><div class="num">3</div> Projektdetails</div>
+
+    <div class="row">
+      <div class="field">
+        <label>Projektname</label>
+        <input type="text" id="projektname" placeholder="z.B. Website-Relaunch Q2" />
+      </div>
+      <div class="field">
+        <label>Geschätzter Gesamtpreis (€)</label>
+        <input type="number" id="gesamtpreis" placeholder="z.B. 3500" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Was soll gemacht werden? (dein Input — Stichpunkte reichen)</label>
+      <textarea id="leistung" rows="4" placeholder="z.B. Redesign der Unternehmenswebsite, 5 Seiten, inkl. Mobile-Optimierung, ohne Texte und Bilder vom Kunden..."></textarea>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label>Was ist explizit NICHT enthalten?</label>
+        <textarea id="nichtEnthalten" rows="3" placeholder="z.B. SEO-Texte, Hosting, Wartung nach Launch..."></textarea>
+      </div>
+      <div class="field">
+        <label>Zeitrahmen / Liefertermin</label>
+        <textarea id="zeitrahmen" rows="3" placeholder="z.B. Projektstart 01.04., Lieferung nach 3 Wochen, 2 Feedback-Runden..."></textarea>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Dein besonderer Mehrwert (optional)</label>
+      <textarea id="mehrwert" rows="2" placeholder="z.B. 8 Jahre Erfahrung in der Branche, bereits ähnliche Projekte umgesetzt..."></textarea>
+    </div>
+
+    <div class="field">
+      <label>Ton des Angebots</label>
+      <select id="ton">
+        <option value="professionell und klar">Professionell & klar</option>
+        <option value="persönlich und warm">Persönlich & warm</option>
+        <option value="sachlich und präzise">Sachlich & präzise</option>
+        <option value="selbstbewusst und direkt">Selbstbewusst & direkt</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- GENERATE BUTTON -->
+  <button class="generate-btn" id="generateBtn" onclick="generateAngebot()">
+    <span class="btn-icon">✦</span>
+    Angebot jetzt generieren
+  </button>
+
+  <!-- LOADING -->
+  <div class="loading" id="loading">
+    <div class="dots">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+    <p>KI schreibt dein Angebot… das dauert ca. 15 Sekunden</p>
+  </div>
+
+  <!-- ERROR -->
+  <div class="error-box" id="errorBox"></div>
+
+  <!-- RESULT -->
+  <div class="result-section" id="resultSection">
+    <div class="result-header">
+      <div class="result-title">
+        <div class="check">✓</div>
+        Dein Angebot ist fertig
+      </div>
+      <div class="action-btns">
+        <button class="btn-secondary" onclick="copyToClipboard()">📋 Kopieren</button>
+        <button class="btn-secondary" onclick="resetForm()">↩ Neu erstellen</button>
+        <button class="btn-primary-sm" onclick="downloadPDF()">⬇ PDF herunterladen</button>
+      </div>
+    </div>
+    <div class="angebot-output">
+      <div class="angebot-toolbar">
+        <div class="toolbar-dot" style="background:#ff5f57"></div>
+        <div class="toolbar-dot" style="background:#febc2e"></div>
+        <div class="toolbar-dot" style="background:#28c840"></div>
+      </div>
+      <div class="angebot-content" id="angebotContent"></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer-note">
+  Proposal Brain MVP · Dein API-Key wird nur lokal in deinem Browser gespeichert und niemals weitergegeben.
+</div>
+
+<script>
+async function generateAngebot() {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  if (!apiKey) {
+    showError('Bitte trage deinen Anthropic API Key oben ein. Du kannst ihn unter console.anthropic.com erstellen.');
+    return;
+  }
+
+  // Daten sammeln
+  const data = {
+    freelancerName: document.getElementById('freelancerName').value || 'Nicht angegeben',
+    berufsbezeichnung: document.getElementById('berufsbezeichnung').value || '',
+    email: document.getElementById('freelancerEmail').value || '',
+    steuernummer: document.getElementById('steuernummer').value || '',
+    kleinunternehmer: document.getElementById('kleinunternehmer').checked,
+    stundensatz: document.getElementById('stundensatz').value || '',
+    kundenname: document.getElementById('kundenname').value || 'Sehr geehrte Damen und Herren',
+    ansprechpartner: document.getElementById('ansprechpartner').value || '',
+    branche: document.getElementById('branche').value || '',
+    anrede: document.getElementById('anrede').value,
+    gueltigBis: document.getElementById('gueltigBis').value || '',
+    projektname: document.getElementById('projektname').value || 'Projekt',
+    gesamtpreis: document.getElementById('gesamtpreis').value || '',
+    leistung: document.getElementById('leistung').value || '',
+    nichtEnthalten: document.getElementById('nichtEnthalten').value || '',
+    zeitrahmen: document.getElementById('zeitrahmen').value || '',
+    mehrwert: document.getElementById('mehrwert').value || '',
+    ton: document.getElementById('ton').value,
+  };
+
+  if (!data.leistung) {
+    showError('Bitte beschreibe kurz, was du für den Kunden machen wirst (Feld "Was soll gemacht werden?").');
+    return;
+  }
+
+  // UI: Loading
+  document.getElementById('generateBtn').disabled = true;
+  document.getElementById('loading').classList.add('active');
+  document.getElementById('resultSection').classList.remove('active');
+  document.getElementById('errorBox').classList.remove('active');
+
+  const heute = new Date().toLocaleDateString('de-DE');
+  const angebotsnummer = 'ANG-' + Date.now().toString().slice(-6);
+
+  const ustHinweis = data.kleinunternehmer
+    ? 'Gemäß §19 UStG wird keine Umsatzsteuer berechnet.'
+    : data.gesamtpreis
+      ? `Nettobetrag: ${data.gesamtpreis} €\nzzgl. 19% MwSt.: ${(parseFloat(data.gesamtpreis) * 0.19).toFixed(2)} €\nGesamtbetrag: ${(parseFloat(data.gesamtpreis) * 1.19).toFixed(2)} €`
+      : 'Preise zzgl. der gesetzlichen Umsatzsteuer.';
+
+  const prompt = `Du bist ein erfahrener deutscher Freelancer und Textspezialist für professionelle Geschäftskorrespondenz. Schreibe ein vollständiges, professionelles Angebot auf Deutsch.
+
+DEINE DATEN:
+- Name: ${data.freelancerName}
+- Berufsbezeichnung: ${data.berufsbezeichnung}
+- E-Mail: ${data.email}
+- Steuernummer/USt-ID: ${data.steuernummer || 'nicht angegeben'}
+- Stundensatz: ${data.stundensatz || 'nicht angegeben'}
+
+KUNDENDATEN:
+- Unternehmen: ${data.kundenname}
+- Ansprechpartner: ${data.ansprechpartner}
+- Branche: ${data.branche}
+
+PROJEKTDETAILS:
+- Projektname: ${data.projektname}
+- Leistungsbeschreibung: ${data.leistung}
+- Nicht enthalten: ${data.nichtEnthalten || 'nicht spezifiziert'}
+- Zeitrahmen: ${data.zeitrahmen || 'nach Absprache'}
+- Dein Mehrwert: ${data.mehrwert || 'nicht angegeben'}
+
+FORMALES:
+- Angebotsnummer: ${angebotsnummer}
+- Datum: ${heute}
+- Gültig bis: ${data.gueltigBis || '14 Tage nach Erhalt'}
+- Ton: ${data.ton}
+- Preishinweis: ${ustHinweis}
+
+STRUKTUR DES ANGEBOTS (halte dich exakt daran):
+1. Kopfzeile mit Angebotsnummer, Datum, Absender- und Empfängerdaten
+2. Betreffzeile (fett, prägnant)
+3. Anrede: "${data.anrede} ${data.ansprechpartner || ''}"
+4. Einleitung (2-3 Sätze: Bezug auf Anfrage, Freude über Interesse, kurze Vorschau)
+5. Leistungsumfang (als klare, strukturierte Aufzählung)
+6. Was ist NICHT im Angebot enthalten (als Abgrenzung)
+7. Zeitplan und Projektablauf
+8. Preisübersicht (${ustHinweis})
+9. Dein Mehrwert / Warum du? (1 kurzer Absatz)
+10. Nächste Schritte (CTA — was soll der Kunde tun?)
+11. Schlussformel + Freizeichnungsklausel ("unverbindliches Angebot")
+12. Grußformel + Name
+
+Schreibe das Angebot jetzt vollständig und professionell. Keine Platzhalter, keine eckigen Klammern — nutze alle gegebenen Informationen. Das Angebot soll sofort versandfertig sein.`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    const result = await response.json();
+
+    if (result.error) {
+      throw new Error(result.error.message || 'API-Fehler aufgetreten.');
+    }
+
+    const text = result.content?.[0]?.text || '';
+    document.getElementById('angebotContent').textContent = text;
+    document.getElementById('resultSection').classList.add('active');
+    document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  } catch (err) {
+    showError('Fehler: ' + err.message + '\n\nBitte prüfe deinen API-Key und versuche es erneut.');
+  } finally {
+    document.getElementById('generateBtn').disabled = false;
+    document.getElementById('loading').classList.remove('active');
+  }
+}
+
+function showError(msg) {
+  const box = document.getElementById('errorBox');
+  box.textContent = msg;
+  box.classList.add('active');
+  box.scrollIntoView({ behavior: 'smooth' });
+}
+
+function copyToClipboard() {
+  const text = document.getElementById('angebotContent').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    alert('Angebot in die Zwischenablage kopiert!');
+  });
+}
+
+function resetForm() {
+  document.getElementById('resultSection').classList.remove('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function downloadPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+
+  const text = document.getElementById('angebotContent').textContent;
+  const lines = doc.splitTextToSize(text, 170);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(15, 15, 15);
+
+  let y = 20;
+  const pageHeight = 280;
+
+  lines.forEach(line => {
+    if (y > pageHeight) {
+      doc.addPage();
+      y = 20;
+    }
+    doc.text(line, 20, y);
+    y += 5.5;
+  });
+
+  const projektname = document.getElementById('projektname').value || 'Angebot';
+  doc.save(`Angebot_${projektname.replace(/\s+/g, '_')}.pdf`);
+}
+</script>
+</body>
+</html>
