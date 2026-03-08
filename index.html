@@ -8,14 +8,14 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root {
-    --ink: #0f0f0f;
-    --paper: #f7f4ef;
-    --cream: #ede9e1;
-    --accent: #c8622a;
-    --accent-light: #f0ddd1;
-    --muted: #7a7267;
-    --border: #d6d0c4;
-    --success: #2a7a4b;
+    --ink: #1a1f2e;
+    --paper: #f4f6f9;
+    --cream: #e8ecf2;
+    --accent: #2c4a8c;
+    --accent-light: #dce4f5;
+    --muted: #64748b;
+    --border: #cbd5e1;
+    --success: #1e6b45;
     --white: #ffffff;
   }
 
@@ -519,14 +519,14 @@
 <div class="hero">
   <div class="hero-eyebrow">KI-Angebotsgenerator für deutsche Freelancer</div>
   <h1>Professionelle Angebote.<br><em>In 5 Minuten.</em></h1>
-  <p>Fülle das Formular aus — die KI schreibt ein rechtssicheres, überzeugendes Angebot auf Deutsch. Fertig zum Versenden.</p>
+  <p>Füllen Sie das Formular aus — die KI schreibt ein rechtssicheres, überzeugendes Angebot auf Deutsch. Fertig zum Versenden.</p>
 </div>
 
 <div class="api-section">
   <div class="api-box">
     <label>
       API Key
-      <span>Einmalig eintragen, bleibt lokal</span>
+      <span>Einmalig eintragen, bleibt lokal bei Ihnen</span>
     </label>
     <input type="password" id="apiKey" placeholder="sk-ant-api03-..." />
     <a href="https://console.anthropic.com" target="_blank" class="api-link">→ Key holen</a>
@@ -676,7 +676,7 @@
       <div class="dot"></div>
       <div class="dot"></div>
     </div>
-    <p>KI schreibt dein Angebot… das dauert ca. 15 Sekunden</p>
+    <p>KI schreibt Ihr Angebot… das dauert ca. 15 Sekunden</p>
   </div>
 
   <!-- ERROR -->
@@ -708,14 +708,14 @@
 </div>
 
 <div class="footer-note">
-  Proposal Brain MVP · Dein API-Key wird nur lokal in deinem Browser gespeichert und niemals weitergegeben.
+  Proposal Brain MVP · Ihr API-Key wird nur lokal in Ihrem Browser gespeichert und niemals weitergegeben.
 </div>
 
 <script>
 async function generateAngebot() {
   const apiKey = document.getElementById('apiKey').value.trim();
   if (!apiKey) {
-    showError('Bitte trage deinen Anthropic API Key oben ein. Du kannst ihn unter console.anthropic.com erstellen.');
+    showError('Bitte tragen Sie Ihren Anthropic API Key oben ein. Sie können ihn unter console.anthropic.com erstellen.');
     return;
   }
 
@@ -742,7 +742,7 @@ async function generateAngebot() {
   };
 
   if (!data.leistung) {
-    showError('Bitte beschreibe kurz, was du für den Kunden machen wirst (Feld "Was soll gemacht werden?").');
+    showError('Bitte beschreiben Sie kurz, was Sie für den Kunden machen werden (Feld "Was soll gemacht werden?").');
     return;
   }
 
@@ -833,7 +833,7 @@ Schreibe das Angebot jetzt vollständig und professionell. Keine Platzhalter, ke
     document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   } catch (err) {
-    showError('Fehler: ' + err.message + '\n\nBitte prüfe deinen API-Key und versuche es erneut.');
+    showError('Fehler: ' + err.message + '\n\nBitte prüfen Sie Ihren API-Key und versuchen Sie es erneut.');
   } finally {
     document.getElementById('generateBtn').disabled = false;
     document.getElementById('loading').classList.remove('active');
