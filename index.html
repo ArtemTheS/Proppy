@@ -1112,7 +1112,7 @@ function downloadPDF() {
       if (cls.includes('angebot-section-title')) {
         checkPage(16);
         doc.setFontSize(11);
-        doc.setFont('helvetica', 'bold');
+        doc.setFont('times', 'bold');
         doc.setTextColor(44, 74, 140);
         doc.text(text, marginL, y);
         y += 2;
@@ -1123,7 +1123,7 @@ function downloadPDF() {
       } else {
         checkPage(12);
         doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
+        doc.setFont('times', 'bold');
         doc.setTextColor(26, 31, 46);
         const lines = doc.splitTextToSize(text, contentW);
         lines.forEach(line => { checkPage(9); doc.text(line, marginL, y); y += 9; });
@@ -1148,7 +1148,7 @@ function downloadPDF() {
         lines.forEach((line, i) => {
           checkPage(5);
           const isBold = i === 0;
-          doc.setFont('helvetica', isBold ? 'bold' : 'normal');
+          doc.setFont('times', isBold ? 'bold' : 'normal');
           doc.setFontSize(isBold ? 10 : 9);
           doc.setTextColor(isBold ? 26 : 100, isBold ? 31 : 116, isBold ? 46 : 139);
           const wrapped = doc.splitTextToSize(line.trim(), halfw);
@@ -1170,7 +1170,7 @@ function downloadPDF() {
       // Meta
       if (metaEl) {
         doc.setFontSize(8);
-        doc.setFont('helvetica', 'normal');
+        doc.setFont('times', 'normal');
         doc.setTextColor(100, 116, 139);
         const metaText = metaEl.innerText.trim().replace(/\n+/g, '   |   ');
         doc.text(metaText, marginL, y);
@@ -1182,7 +1182,7 @@ function downloadPDF() {
     if (tag === 'p') {
       checkPage(7);
       doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
+      doc.setFont('times', 'normal');
       doc.setTextColor(26, 31, 46);
       const lines = doc.splitTextToSize(text, contentW);
       lines.forEach(line => { checkPage(6); doc.text(line, marginL, y); y += 6; });
@@ -1192,29 +1192,37 @@ function downloadPDF() {
 
     if (tag === 'ul') {
       const isNicht = cls.includes('nicht-enthalten');
-      const symbol = isNicht ? '\u2717' : '\u2713';
+      // Einfache ASCII-Symbole die jsPDF zuverlässig rendert
+      const symbol = isNicht ? 'x' : '+';
       const symR = isNicht ? 192 : 44;
       const symG = isNicht ? 57 : 74;
       const symB = isNicht ? 43 : 140;
 
       node.querySelectorAll('li').forEach(li => {
-        // Symbol und führende Sonderzeichen aus dem Text entfernen
-        const liText = (li.innerText || '').trim().replace(/^[✓✗•\-–\u2713\u2717]+\s*/, '');
+        // HTML-Entities dekodieren via temporäres Element
+        const tmp = document.createElement('textarea');
+        tmp.innerHTML = li.innerHTML.replace(/<[^>]*>/g, ' ');
+        let liText = tmp.value.trim();
+        // Alle Symbol-Varianten am Anfang entfernen
+        liText = liText.replace(/^[\s✓✗✔✘+x•\-–\u2713\u2717\u2714\u2718&;#\d]+\s*/i, '').trim();
         if (!liText) return;
+
         const liLines = doc.splitTextToSize(liText, contentW - 9);
         const blockH = liLines.length * 5.5 + 2;
         checkPage(blockH);
 
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'bold');
+        // Symbol
+        doc.setFontSize(10);
+        doc.setFont('times', 'bold');
         doc.setTextColor(symR, symG, symB);
         doc.text(symbol, marginL, y);
 
+        // Text
         doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
+        doc.setFont('times', 'normal');
         doc.setTextColor(isNicht ? 100 : 26, isNicht ? 116 : 31, isNicht ? 139 : 46);
         liLines.forEach((line, i) => {
-          doc.text(line, marginL + 7, y + (i * 5.5));
+          doc.text(line, marginL + 6, y + (i * 5.5));
         });
         y += blockH;
       });
@@ -1233,17 +1241,17 @@ function downloadPDF() {
 
       doc.setTextColor(255, 255, 255);
       if (labelEl) {
-        doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8); doc.setFont('times', 'normal');
         doc.setTextColor(180, 190, 210);
         doc.text((labelEl.innerText || '').trim(), marginL + 6, y + 8);
       }
       if (betragEl) {
-        doc.setFontSize(17); doc.setFont('helvetica', 'bold');
+        doc.setFontSize(17); doc.setFont('times', 'bold');
         doc.setTextColor(255, 255, 255);
         doc.text((betragEl.innerText || '').trim(), marginL + 6, y + 19);
       }
       if (detailsEl) {
-        doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8); doc.setFont('times', 'normal');
         doc.setTextColor(180, 190, 210);
         const dLines = (detailsEl.innerText || '').trim().split('\n').filter(l => l.trim());
         dLines.forEach((dl, i) => {
@@ -1263,7 +1271,7 @@ function downloadPDF() {
       doc.setDrawColor(44, 74, 140);
       doc.setLineWidth(0.8);
       doc.line(marginL, y, marginL, y + boxH);
-      doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9); doc.setFont('times', 'normal');
       doc.setTextColor(26, 31, 46);
       hlLines.forEach((line, i) => { doc.text(line, marginL + 6, y + 7 + (i * 5.5)); });
       y += boxH + 6;
@@ -1272,7 +1280,7 @@ function downloadPDF() {
 
     if (tag === 'div' && cls.includes('angebot-schluss')) {
       checkPage(10);
-      doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10); doc.setFont('times', 'normal');
       doc.setTextColor(26, 31, 46);
       const lines = doc.splitTextToSize(text, contentW);
       lines.forEach(line => { checkPage(6); doc.text(line, marginL, y); y += 6; });
@@ -1287,7 +1295,7 @@ function downloadPDF() {
       doc.setLineWidth(0.3);
       doc.line(marginL, y, pageW - marginR, y);
       y += 5;
-      doc.setFontSize(8); doc.setFont('helvetica', 'italic');
+      doc.setFontSize(8); doc.setFont('times', 'italic');
       doc.setTextColor(100, 116, 139);
       const lines = doc.splitTextToSize(text, contentW);
       lines.forEach(line => { checkPage(5); doc.text(line, marginL, y); y += 5; });
