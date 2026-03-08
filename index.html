@@ -437,7 +437,152 @@
 
   .btn-primary-sm:hover { background: var(--accent); border-color: var(--accent); }
 
-  /* ANGEBOT OUTPUT */
+  /* ANGEBOT INHALTS-STYLES */
+  .angebot-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 32px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--muted);
+  }
+
+  .angebot-header strong {
+    display: block;
+    color: var(--ink);
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+
+  .angebot-header .meta {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .angebot-header .meta span {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .angebot-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 28px 0;
+  }
+
+  .angebot-section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--accent-light);
+    letter-spacing: -0.3px;
+  }
+
+  .angebot-content h2:first-child {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    color: var(--ink);
+    margin-bottom: 20px;
+    letter-spacing: -0.5px;
+  }
+
+  .angebot-text {
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--ink);
+    margin-bottom: 12px;
+  }
+
+  .angebot-list {
+    margin: 8px 0 16px 0;
+    padding-left: 0;
+    list-style: none;
+  }
+
+  .angebot-list li {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--ink);
+    padding: 6px 0 6px 20px;
+    position: relative;
+    border-bottom: 1px solid var(--cream);
+  }
+
+  .angebot-list li:last-child { border-bottom: none; }
+
+  .angebot-list li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 12px;
+  }
+
+  .angebot-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 16px;
+    font-size: 14px;
+  }
+
+  .angebot-table tr:not(:last-child) td {
+    border-bottom: 1px solid var(--cream);
+  }
+
+  .angebot-table td {
+    padding: 10px 12px;
+    line-height: 1.5;
+  }
+
+  .angebot-table td:last-child {
+    text-align: right;
+    font-weight: 500;
+  }
+
+  .angebot-table tr:last-child td {
+    background: var(--accent);
+    color: white;
+    font-weight: 700;
+    font-size: 15px;
+    border-radius: 4px;
+  }
+
+  .angebot-highlight {
+    background: var(--accent-light);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    padding: 16px 20px;
+    margin: 16px 0;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--ink);
+  }
+
+  .angebot-footer {
+    margin-top: 32px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  .angebot-footer strong {
+    color: var(--ink);
+    display: block;
+    margin-top: 12px;
+    font-size: 14px;
+  }
   .angebot-output {
     background: var(--white);
     border: 1px solid var(--border);
@@ -774,21 +919,32 @@ FORMALES:
 - Ton: ${data.ton}
 - Preishinweis: ${ustHinweis}
 
-STRUKTUR DES ANGEBOTS (halte dich exakt daran):
-1. Kopfzeile mit Angebotsnummer, Datum, Absender- und Empfängerdaten
-2. Betreffzeile (fett, prägnant)
-3. Anrede: "${data.anrede} ${data.ansprechpartner || ''}"
-4. Einleitung (2-3 Sätze: Bezug auf Anfrage, Freude über Interesse, kurze Vorschau)
-5. Leistungsumfang (als klare, strukturierte Aufzählung)
-6. Was ist NICHT im Angebot enthalten (als Abgrenzung)
-7. Zeitplan und Projektablauf
-8. Preisübersicht (${ustHinweis})
-9. Dein Mehrwert / Warum du? (1 kurzer Absatz)
-10. Nächste Schritte (CTA — was soll der Kunde tun?)
-11. Schlussformel + Freizeichnungsklausel ("unverbindliches Angebot")
-12. Grußformel + Name
+STRUKTUR DES ANGEBOTS — gib es als sauberes HTML zurück. Nur den Body-Inhalt, kein <html>, kein <head>, kein <body>-Tag.
 
-Schreibe das Angebot jetzt vollständig und professionell. Keine Platzhalter, keine eckigen Klammern — nutze alle gegebenen Informationen. Das Angebot soll sofort versandfertig sein.`;
+Verwende ausschließlich diese HTML-Elemente:
+- <div class="angebot-header"> für die Kopfzeile mit Absender- und Empfängerdaten sowie Angebotsnummer/Datum
+- <hr class="angebot-divider"> für Trennlinien zwischen Abschnitten
+- <h2 class="angebot-section-title"> für Abschnittsüberschriften (z.B. "Leistungsumfang", "Preisübersicht")
+- <p class="angebot-text"> für normale Absätze
+- <ul class="angebot-list"> mit <li> für Aufzählungen
+- <table class="angebot-table"> mit <tr><td> für die Preisübersicht
+- <div class="angebot-highlight"> für den CTA / nächste Schritte
+- <div class="angebot-footer"> für Schlussformel, Freizeichnungsklausel und Grußformel
+
+Abschnitte in dieser Reihenfolge:
+1. Kopfzeile: Absender links, Empfänger rechts, darunter Angebotsnummer + Datum
+2. Betreff (als h2, fett und prominent)
+3. Anrede: "${data.anrede} ${data.ansprechpartner || ''}"
+4. Einleitung (2-3 Sätze)
+5. Leistungsumfang (Aufzählung)
+6. Nicht enthalten (Aufzählung)
+7. Zeitplan
+8. Preisübersicht als Tabelle (${ustHinweis})
+9. Warum ich? (1 Absatz)
+10. Nächste Schritte (highlight-Box)
+11. Schlussformel + Freizeichnungsklausel + Grußformel
+
+Schreibe das Angebot vollständig und professionell. Keine Platzhalter, keine eckigen Klammern. Nur valides HTML wie oben beschrieben — nichts anderes.`;
 
   try {
     const response = await fetch('/api/generate', {
@@ -804,7 +960,7 @@ Schreibe das Angebot jetzt vollständig und professionell. Keine Platzhalter, ke
     }
 
     const text = result.result || '';
-    document.getElementById('angebotContent').textContent = text;
+    document.getElementById('angebotContent').innerHTML = text;
     document.getElementById('resultSection').classList.add('active');
     document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
@@ -824,7 +980,8 @@ function showError(msg) {
 }
 
 function copyToClipboard() {
-  const text = document.getElementById('angebotContent').textContent;
+  const el = document.getElementById('angebotContent');
+  const text = el.innerText;
   navigator.clipboard.writeText(text).then(() => {
     alert('Angebot in die Zwischenablage kopiert!');
   });
@@ -839,7 +996,7 @@ function downloadPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
 
-  const text = document.getElementById('angebotContent').textContent;
+  const text = document.getElementById('angebotContent').innerText;
   const lines = doc.splitTextToSize(text, 170);
 
   doc.setFont('helvetica', 'normal');
