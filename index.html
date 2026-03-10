@@ -6,6 +6,7 @@
 <title>Proposal Brain — KI-Angebote für Freelancer</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
   :root {
     --ink: #1a1f2e;
@@ -687,7 +688,74 @@
     min-height: 300px;
   }
 
-  /* ERROR */
+  /* UPLOAD VORLAGE */
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--paper);
+    position: relative;
+  }
+
+  .upload-zone:hover, .upload-zone.dragover {
+    border-color: var(--accent);
+    background: var(--accent-light);
+  }
+
+  .upload-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    border: none;
+    padding: 0;
+    background: none;
+  }
+
+  .upload-icon { font-size: 28px; margin-bottom: 8px; }
+
+  .upload-zone p {
+    font-size: 13px;
+    color: var(--muted);
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  .upload-zone strong {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .upload-success {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    background: #edf7f0;
+    border: 1.5px solid #a8d5b5;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--success);
+  }
+
+  .upload-success.active { display: flex; }
+  .upload-success .remove-btn {
+    margin-left: auto;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 16px;
+    padding: 0;
+    line-height: 1;
+  }
+  .upload-success .remove-btn:hover { color: #c0392b; }
   .error-box {
     display: none;
     grid-column: 1 / -1;
@@ -872,6 +940,25 @@
     </div>
   </div>
 
+  <!-- KARTE 4: Angebotsvorlage -->
+  <div class="card full">
+    <div class="card-title"><div class="num">4</div> Angebotsvorlage hochladen <span style="font-family:'DM Sans',sans-serif;font-size:12px;font-weight:400;color:var(--muted);margin-left:6px;">(optional)</span></div>
+
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6;">Laden Sie ein bestehendes Angebot als PDF hoch — die KI übernimmt automatisch Ihren Schreibstil, Ihre Formulierungen und Ihre Struktur.</p>
+
+    <div class="upload-zone" id="uploadZone">
+      <input type="file" id="vorlagePDF" accept=".pdf" onchange="handlePDFUpload(event)" />
+      <div class="upload-icon">📄</div>
+      <p><strong>PDF hier ablegen</strong> oder klicken zum Auswählen<br>Nur PDF-Dateien · Max. 10 MB</p>
+    </div>
+
+    <div class="upload-success" id="uploadSuccess">
+      <span>✓</span>
+      <span id="uploadFileName">vorlage.pdf</span>
+      <button class="remove-btn" onclick="removeVorlage()" title="Entfernen">×</button>
+    </div>
+  </div>
+
   <!-- GENERATE BUTTON -->
   <button class="generate-btn" id="generateBtn" onclick="generateAngebot()">
     <span class="btn-icon">✦</span>
@@ -921,6 +1008,72 @@
 </div>
 
 <script>
+// pdf.js Worker konfigurieren
+if (window.pdfjsLib) {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+let vorlageText = '';
+
+async function handlePDFUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (file.size > 10 * 1024 * 1024) {
+    alert('Die Datei ist zu groß. Bitte max. 10 MB.');
+    return;
+  }
+
+  document.getElementById('uploadSuccess').classList.remove('active');
+  document.getElementById('uploadFileName').textContent = 'Wird gelesen…';
+  document.getElementById('uploadSuccess').classList.add('active');
+
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    let fullText = '';
+
+    for (let i = 1; i <= Math.min(pdf.numPages, 5); i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      const pageText = content.items.map(item => item.str).join(' ');
+      fullText += pageText + '\n';
+    }
+
+    vorlageText = fullText.trim();
+    document.getElementById('uploadFileName').textContent = file.name;
+
+  } catch (err) {
+    vorlageText = '';
+    document.getElementById('uploadSuccess').classList.remove('active');
+    alert('PDF konnte nicht gelesen werden: ' + err.message);
+  }
+}
+
+function removeVorlage() {
+  vorlageText = '';
+  document.getElementById('vorlagePDF').value = '';
+  document.getElementById('uploadSuccess').classList.remove('active');
+}
+
+// Drag & Drop
+document.addEventListener('DOMContentLoaded', () => {
+  const zone = document.getElementById('uploadZone');
+  if (!zone) return;
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type === 'application/pdf') {
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      document.getElementById('vorlagePDF').files = dt.files;
+      handlePDFUpload({ target: { files: [file] } });
+    }
+  });
+});
+
 async function generateAngebot() {
   // Daten sammeln
   const data = {
@@ -962,7 +1115,21 @@ async function generateAngebot() {
       ? `Nettobetrag: ${data.gesamtpreis} €\nzzgl. 19% MwSt.: ${(parseFloat(data.gesamtpreis) * 0.19).toFixed(2)} €\nGesamtbetrag: ${(parseFloat(data.gesamtpreis) * 1.19).toFixed(2)} €`
       : 'Preise zzgl. der gesetzlichen Umsatzsteuer.';
 
+  const vorlageAbschnitt = vorlageText ? `
+STILVORLAGE — WICHTIG:
+Der Nutzer hat ein bestehendes Angebot hochgeladen. Analysiere den folgenden Text und übernimm:
+- Den Schreibstil (formell/persönlich, Satzlänge, Wortwahl)
+- Die Anredeform und Grußformel
+- Typische Formulierungen und Phrasen des Nutzers
+- Die Gliederungslogik falls erkennbar
+Das neue Angebot soll sich anfühlen als hätte der Nutzer es selbst geschrieben — nicht wie eine KI-Vorlage.
+
+VORLAGEN-TEXT:
+${vorlageText.slice(0, 3000)}
+` : '';
+
   const prompt = `Du bist ein erfahrener deutscher Freelancer und Textspezialist für professionelle Geschäftskorrespondenz. Schreibe ein vollständiges, professionelles Angebot auf Deutsch.
+${vorlageAbschnitt}
 
 DEINE DATEN:
 - Name: ${data.freelancerName}
