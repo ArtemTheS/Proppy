@@ -688,6 +688,98 @@
     min-height: 300px;
   }
 
+  /* LOGO UPLOAD */
+  .logo-input-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .logo-upload-zone {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--paper);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 14px;
+    font-size: 13px;
+    color: var(--accent);
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color 0.2s;
+    flex-shrink: 0;
+  }
+
+  .logo-upload-zone:hover { border-color: var(--accent); }
+
+  .logo-upload-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: none;
+    background: none;
+  }
+
+  .logo-oder {
+    font-size: 12px;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  .logo-preview-wrap {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: var(--paper);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+  }
+
+  .logo-preview-wrap.active { display: flex; }
+
+  .logo-preview-wrap img {
+    max-height: 48px;
+    max-width: 160px;
+    object-fit: contain;
+  }
+
+  .logo-remove {
+    margin-left: auto;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--muted);
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s;
+  }
+
+  .logo-remove:hover { color: #c0392b; background: #fff0ed; }
+
+  /* ANGEBOT LOGO im Output */
+  .angebot-logo {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+  }
+
+  .angebot-logo img {
+    max-height: 56px;
+    max-width: 200px;
+    object-fit: contain;
+  }
+
   /* UPLOAD VORLAGE */
   .upload-zone {
     border: 2px dashed var(--border);
@@ -816,8 +908,26 @@
   <div class="card">
     <div class="card-title"><div class="num">1</div> Deine Daten</div>
 
+    <!-- LOGO -->
     <div class="field">
-      <label>Dein Name / Firmenname</label>
+      <label>Ihr Logo <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(optional)</span></label>
+      <div class="logo-input-row">
+        <div class="logo-upload-zone" id="logoUploadZone">
+          <input type="file" id="logoDatei" accept="image/*" onchange="handleLogoUpload(event)" />
+          <span class="logo-upload-icon">🖼</span>
+          <span>Bild hochladen</span>
+        </div>
+        <span class="logo-oder">oder</span>
+        <input type="text" id="logoURL" placeholder="https://ihre-website.de/logo.png" onchange="handleLogoURL()" oninput="handleLogoURL()" style="flex:1" />
+      </div>
+      <div class="logo-preview-wrap" id="logoPreviewWrap">
+        <img id="logoPreview" src="" alt="Logo Vorschau" />
+        <button class="logo-remove" onclick="removeLogo()">× Logo entfernen</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Ihr Name / Firmenname</label>
       <input type="text" id="freelancerName" placeholder="z.B. Max Mustermann" />
     </div>
     <div class="field">
@@ -825,7 +935,7 @@
       <input type="text" id="berufsbezeichnung" placeholder="z.B. UX Designer, SEO-Berater" />
     </div>
     <div class="field">
-      <label>Deine E-Mail</label>
+      <label>Ihre E-Mail</label>
       <input type="email" id="freelancerEmail" placeholder="max@beispiel.de" />
     </div>
     <div class="field">
@@ -1074,6 +1184,45 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+let logoDataURL = '';
+
+function handleLogoUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    logoDataURL = e.target.result;
+    showLogoPreview(logoDataURL);
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleLogoURL() {
+  const url = document.getElementById('logoURL').value.trim();
+  if (!url) { removeLogo(); return; }
+  logoDataURL = url;
+  showLogoPreview(url);
+}
+
+function showLogoPreview(src) {
+  const wrap = document.getElementById('logoPreviewWrap');
+  const img = document.getElementById('logoPreview');
+  img.src = src;
+  img.onerror = () => { wrap.classList.remove('active'); logoDataURL = ''; };
+  wrap.classList.add('active');
+}
+
+function removeLogo() {
+  logoDataURL = '';
+  document.getElementById('logoDatei').value = '';
+  document.getElementById('logoURL').value = '';
+  document.getElementById('logoPreviewWrap').classList.remove('active');
+  document.getElementById('logoPreview').src = '';
+  // auch aus Angebot entfernen falls schon generiert
+  const logoEl = document.getElementById('angebotLogo');
+  if (logoEl) logoEl.remove();
+}
+
 async function generateAngebot() {
   // Daten sammeln
   const data = {
@@ -1217,7 +1366,19 @@ Schreibe das Angebot vollständig und professionell. Keine Platzhalter, keine ec
 
     const text = result.result || '';
     const clean = text.replace(/<li>([\s]*)([✓✗•\-–][\s]*)/g, '<li>');
-    document.getElementById('angebotContent').innerHTML = clean;
+    const content = document.getElementById('angebotContent');
+    content.innerHTML = clean;
+
+    // Logo oben rechts einfügen falls vorhanden
+    const existingLogo = document.getElementById('angebotLogo');
+    if (existingLogo) existingLogo.remove();
+    if (logoDataURL) {
+      const logoDiv = document.createElement('div');
+      logoDiv.id = 'angebotLogo';
+      logoDiv.className = 'angebot-logo';
+      logoDiv.innerHTML = `<img src="${logoDataURL}" alt="Logo" />`;
+      content.insertBefore(logoDiv, content.firstChild);
+    }
     document.getElementById('resultSection').classList.add('active');
     document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
@@ -1488,7 +1649,26 @@ function downloadPDF() {
   try {
     const container = document.getElementById('angebotContent');
     if (!container) { alert('Fehler: Kein Angebot zum Exportieren gefunden.'); return; }
-    container.childNodes.forEach(node => processNode(node));
+
+    // Logo oben rechts ins PDF
+    if (logoDataURL) {
+      try {
+        const imgProps = doc.getImageProperties(logoDataURL);
+        const maxW = 50, maxH = 18;
+        let w = imgProps.width, h = imgProps.height;
+        const ratio = Math.min(maxW / w, maxH / h);
+        w = w * ratio; h = h * ratio;
+        const format = logoDataURL.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+        doc.addImage(logoDataURL, format, pageW - marginR - w, y, w, h);
+        y += h + 6;
+      } catch(e) { /* Logo konnte nicht geladen werden, überspringen */ }
+    }
+
+    container.childNodes.forEach(node => {
+      // Logo-Div überspringen — bereits direkt gerendert
+      if (node.id === 'angebotLogo') return;
+      processNode(node);
+    });
     const projektname = document.getElementById('projektname').value || 'Angebot';
     doc.save(`Angebot_${projektname.replace(/\s+/g, '_')}.pdf`);
   } catch(e) {
