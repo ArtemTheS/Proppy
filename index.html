@@ -953,10 +953,6 @@
       </label>
     </div>
 
-    <div class="field">
-      <label>Stundensatz / Tagessatz</label>
-      <input type="text" id="stundensatz" placeholder="z.B. 90€/Std. oder 700€/Tag" />
-    </div>
   </div>
 
   <!-- KARTE 2: Kundendaten -->
@@ -1012,8 +1008,29 @@
         <input type="text" id="projektname" placeholder="z.B. Website-Relaunch Q2" />
       </div>
       <div class="field">
-        <label>Geschätzter Gesamtpreis (€)</label>
+        <label>Abrechnung</label>
+        <select id="abrechnungsart" onchange="togglePreisfelder()">
+          <option value="pauschal">Pauschalpreis</option>
+          <option value="stunden">Nach Stunden / Tagen</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="felder-pauschal" class="row">
+      <div class="field">
+        <label>Gesamtpreis netto (€)</label>
         <input type="number" id="gesamtpreis" placeholder="z.B. 3500" />
+      </div>
+    </div>
+
+    <div id="felder-stunden" class="row" style="display:none">
+      <div class="field">
+        <label>Stundensatz / Tagessatz</label>
+        <input type="text" id="stundensatz" placeholder="z.B. 90€/Std. oder 700€/Tag" />
+      </div>
+      <div class="field">
+        <label>Geschätzter Gesamtaufwand</label>
+        <input type="text" id="aufwand" placeholder="z.B. ca. 20 Stunden / 3 Tage" />
       </div>
     </div>
 
@@ -1115,8 +1132,22 @@ function handleLogoUpload(event) {
 function handleLogoURL() {
   const url = document.getElementById('logoURL').value.trim();
   if (!url) { removeLogo(); return; }
+  // URL direkt verwenden — funktioniert sofort in der Vorschau
   logoDataURL = url;
   showLogoPreview(url);
+  // Zusätzlich versuchen via Canvas zu Base64 zu konvertieren (für PDF-Export)
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      canvas.getContext('2d').drawImage(img, 0, 0);
+      logoDataURL = canvas.toDataURL('image/png');
+    } catch(e) { /* CORS geblockt — URL bleibt als Fallback */ }
+  };
+  img.src = url;
 }
 
 function showLogoPreview(src) {
@@ -1138,7 +1169,16 @@ function removeLogo() {
   if (logoEl) logoEl.remove();
 }
 
+function togglePreisfelder() {
+  const art = document.getElementById('abrechnungsart').value;
+  document.getElementById('felder-pauschal').style.display = art === 'pauschal' ? '' : 'none';
+  document.getElementById('felder-stunden').style.display = art === 'stunden' ? '' : 'none';
+}
+
 async function generateAngebot() {
+  const abrechnungsart = document.getElementById('abrechnungsart').value;
+  const isPauschal = abrechnungsart === 'pauschal';
+
   // Daten sammeln
   const data = {
     freelancerName: document.getElementById('freelancerName').value || 'Nicht angegeben',
@@ -1146,14 +1186,16 @@ async function generateAngebot() {
     email: document.getElementById('freelancerEmail').value || '',
     steuernummer: document.getElementById('steuernummer').value || '',
     kleinunternehmer: document.getElementById('kleinunternehmer').checked,
-    stundensatz: document.getElementById('stundensatz').value || '',
     kundenname: document.getElementById('kundenname').value || 'Sehr geehrte Damen und Herren',
     ansprechpartner: document.getElementById('ansprechpartner').value || '',
     branche: document.getElementById('branche').value || '',
     anrede: document.getElementById('anrede').value,
     gueltigBis: document.getElementById('gueltigBis').value || '',
     projektname: document.getElementById('projektname').value || 'Projekt',
-    gesamtpreis: document.getElementById('gesamtpreis').value || '',
+    gesamtpreis: isPauschal ? (document.getElementById('gesamtpreis').value || '') : '',
+    stundensatz: !isPauschal ? (document.getElementById('stundensatz').value || '') : '',
+    aufwand: !isPauschal ? (document.getElementById('aufwand').value || '') : '',
+    abrechnungsart: isPauschal ? 'Pauschalpreis' : 'Nach Aufwand',
     leistung: document.getElementById('leistung').value || '',
     nichtEnthalten: document.getElementById('nichtEnthalten').value || '',
     zeitrahmen: document.getElementById('zeitrahmen').value || '',
@@ -1174,19 +1216,22 @@ async function generateAngebot() {
   const angebotsnummer = 'ANG-' + Date.now().toString().slice(-6);
 
   const ustHinweis = data.kleinunternehmer
-    ? 'Gemäß §19 UStG wird keine Umsatzsteuer berechnet.'
+    ? 'Gemäß §19 UStG wird keine Umsatzsteuer berechnet. Kein Steuerausweis.'
     : data.gesamtpreis
-      ? `Nettobetrag: ${data.gesamtpreis} €\nzzgl. 19% MwSt.: ${(parseFloat(data.gesamtpreis) * 0.19).toFixed(2)} €\nGesamtbetrag: ${(parseFloat(data.gesamtpreis) * 1.19).toFixed(2)} €`
-      : 'Preise zzgl. der gesetzlichen Umsatzsteuer.';
+      ? `Nettobetrag: ${data.gesamtpreis} € — zzgl. 19% MwSt.: ${(parseFloat(data.gesamtpreis) * 0.19).toFixed(2)} € — Gesamtbetrag brutto: ${(parseFloat(data.gesamtpreis) * 1.19).toFixed(2)} €`
+      : data.stundensatz
+        ? `Abrechnung nach Aufwand: ${data.stundensatz}${data.aufwand ? ', geschätzter Aufwand: ' + data.aufwand : ''}. Zzgl. 19% MwSt.`
+        : 'Preis nach Absprache. Zzgl. gesetzlicher Umsatzsteuer.';
 
   const prompt = `Du bist ein erfahrener deutscher Freelancer und Textspezialist für professionelle Geschäftskorrespondenz. Schreibe ein vollständiges, professionelles Angebot auf Deutsch.
+
+WICHTIG: Erfinde KEINE Preise. Verwende ausschließlich die exakten Zahlen aus den PREISDATEN unten.
 
 DEINE DATEN:
 - Name: ${data.freelancerName}
 - Berufsbezeichnung: ${data.berufsbezeichnung}
 - E-Mail: ${data.email}
 - Steuernummer/USt-ID: ${data.steuernummer || 'nicht angegeben'}
-- Stundensatz: ${data.stundensatz || 'nicht angegeben'}
 
 KUNDENDATEN:
 - Unternehmen: ${data.kundenname}
@@ -1198,14 +1243,15 @@ PROJEKTDETAILS:
 - Leistungsbeschreibung: ${data.leistung}
 - Nicht enthalten: ${data.nichtEnthalten || 'nicht spezifiziert'}
 - Zeitrahmen: ${data.zeitrahmen || 'nach Absprache'}
-- Dein Mehrwert: ${data.mehrwert || 'nicht angegeben'}
+- Ihr Mehrwert: ${data.mehrwert || 'nicht angegeben'}
 
-FORMALES:
+PREISDATEN — NUR DIESE ZAHLEN VERWENDEN, KEINE EIGENEN BERECHNUNGEN:
+- Abrechnungsart: ${data.abrechnungsart}
+- ${ustHinweis}
 - Angebotsnummer: ${angebotsnummer}
 - Datum: ${heute}
 - Gültig bis: ${data.gueltigBis || '14 Tage nach Erhalt'}
 - Ton: ${data.ton}
-- Preishinweis: ${ustHinweis}
 
 STRUKTUR DES ANGEBOTS — gib es als sauberes HTML zurück. Nur den Body-Inhalt, kein <html>, kein <head>, kein <body>-Tag.
 
@@ -1216,7 +1262,9 @@ Verwende ausschließlich diese HTML-Elemente:
 - <p class="angebot-text"> für normale Absätze
 - <ul class="angebot-list"> mit <li> für Leistungen — WICHTIG: kein Symbol im Text, nur den reinen Listentext
 - <ul class="angebot-list nicht-enthalten"> mit <li> für NICHT enthaltene Leistungen — WICHTIG: kein Symbol im Text, nur den reinen Listentext
-- <div class="angebot-preis-box"> für den Preiskasten — darin: <div class="preis-label">Gesamtbetrag (netto)</div> und <div class="preis-betrag">X.XXX €</div> links, sowie <div class="preis-details">Netto: X €<br>MwSt. 19%: X €<br>Brutto: X €</div> rechts
+${data.gesamtpreis
+  ? `- <div class="angebot-preis-box"> für den Preiskasten — darin: <div class="preis-label">Gesamtbetrag (netto)</div> und <div class="preis-betrag">${data.gesamtpreis} €</div> links, sowie <div class="preis-details">Netto: ${data.gesamtpreis} €<br>MwSt. 19%: ${(parseFloat(data.gesamtpreis)*0.19).toFixed(2)} €<br>Brutto: ${(parseFloat(data.gesamtpreis)*1.19).toFixed(2)} €</div> rechts`
+  : `- <div class="angebot-preis-box"> für den Preiskasten — darin nur: <div class="preis-label">Honorar</div> und <div class="preis-betrag">${data.stundensatz || 'Nach Absprache'}</div> sowie <div class="preis-details">${data.aufwand ? 'Geschätzter Aufwand: ' + data.aufwand : ''}</div>`}
 - <div class="angebot-highlight"> für den CTA / nächste Schritte
 - <div class="angebot-schluss"> für die Schlussformel und Grußformel (z.B. "Mit freundlichen Grüßen, Name")
 - <div class="angebot-footer"> NUR für die Freizeichnungsklausel ("Dieses Angebot ist freibleibend...")
@@ -1229,7 +1277,7 @@ Abschnitte in dieser Reihenfolge:
 5. Leistungsumfang (angebot-section-title + angebot-list, KEINE Symbole im li-Text)
 6. Nicht enthalten (angebot-section-title + angebot-list nicht-enthalten, KEINE Symbole im li-Text)
 7. Zeitplan (angebot-section-title + angebot-text)
-8. Preisübersicht (angebot-section-title + angebot-preis-box, ${ustHinweis})
+8. Preisübersicht (angebot-section-title + angebot-preis-box — EXAKT die Zahlen aus PREISDATEN, KEINE anderen Zahlen)
 9. Warum ich? (angebot-section-title + angebot-text)
 10. Nächste Schritte (angebot-section-title + angebot-highlight)
 11. Schlussformel (angebot-schluss) — getrennt von der Freizeichnungsklausel
